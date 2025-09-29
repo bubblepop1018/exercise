@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美味厨房 - 菜谱搜索</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide-react@0.374.0/dist/umd/lucide-react.min.js"></script>
+  <script>
+    // 模拟lucide-react图标组件
+    const { createElement: h } = React;
+    const icons = ['ChefHat', 'Utensils', 'Leaf', 'Clock', 'Zap', 'Search', 'Filter'];
+    const lucideReact = {};
+    icons.forEach(iconName => {
+      lucideReact[iconName] = ({ className, ...props }) => 
+        h('svg', { 
+          className, 
+          ...props,
+          dangerouslySetInnerHTML: { __html: getIconPath(iconName) }
+        });
+    });
+
+    function getIconPath(iconName) {
+      const paths = {
+        ChefHat: '<path d="M17 21v-2a1 1 0 0 1 1-1h1a2 2 0 0 0 2-2v-3a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v3a2 2 0 0 0 2 2h1a1 1 0 0 1 1 1v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2v-1a2 2 0 0 1 2-2 2 2 0 0 1 2 2v1a2 2 0 0 0 2 2 2 2 0 0 0 2-2Z"/> <path d="M9 9v1a3 3 0 0 0 6 0V9"/> <path d="M12 12v3"/>',
+        Utensils: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/> <path d="M7 2v20"/> <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+        Leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/> <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+        Clock: '<circle cx="12" cy="12" r="10"/> <polyline points="12 6 12 12 16 14"/>',
+        Zap: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+        Search: '<circle cx="11" cy="11" r="8"/> <path d="m21 21-4.3-4.3"/>',
+        Filter: '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'
+      };
+      return paths[iconName] || '';
+    }
+  </script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f9fafb;
+    }
+    .min-h-screen { min-height: 100vh; }
+    .bg-gradient-to-br { background: linear-gradient(to bottom right, #fff7ed, #fef2f2); }
+    .bg-white { background-color: #fff; }
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .border-b { border-bottom-width: 1px; }
+    .border-orange-100 { border-color: #ffedd5; }
+    .max-w-7xl { max-width: 80rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    .space-x-3 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(0.75rem * var(--tw-space-x-reverse)); margin-left: calc(0.75rem * calc(1 - var(--tw-space-x-reverse))); }
+    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .font-bold { font-weight: 700; }
+    .text-gray-900 { color: #111827; }
+    .mt-2 { margin-top: 0.5rem; }
+    .text-gray-600 { color: #4b5563; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    .p-6 { padding: 1.5rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    @media (min-width: 768px) {
+      .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .md\:col-span-2 { grid-column: span 2 / span 2; }
+    }
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .lg\:px-8 { padding-left: 2rem; padding-right: 2rem; }
+    }
+    .gap-6 { gap: 1.5rem; }
+    .block { display: block; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .font-medium { font-weight: 500; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .relative { position: relative; }
+    .w-full { width: 100%; }
+    .pl-10 { padding-left: 2.5rem; }
+    .pr-4 { padding-right: 1rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .border { border-width: 1px; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .focus\:ring-2:focus { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+    .focus\:ring-orange-500:focus { --tw-ring-color: #f97316; }
+    .absolute { position: absolute; }
+    .left-3 { left: 0.75rem; }
+    .top-3\.5 { top: 0.875rem; }
+    .h-5 { height: 1.25rem; }
+    .w-5 { width: 1.25rem; }
+    .text-gray-400 { color: #9ca3af; }
+    .items-end { align-items: flex-end; }
+    .w-full { width: 100%; }
+    .bg-gradient-to-r { background: linear-gradient(to right, var(--tw-gradient-stops)); }
+    .from-orange-500 { --tw-gradient-from: #f97316; }
+    .to-red-500 { --tw-gradient-to: #ef4444; }
+    .text-white { color: #fff; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .font-medium { font-weight: 500; }
+    .hover\:from-orange-600:hover { --tw-gradient-from: #ea580c; }
+    .hover\:to-red-600:hover { --tw-gradient-to: #dc2626; }
+    .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+    .duration-200 { transition-duration: 200ms; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .space-x-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(0.5rem * var(--tw-space-x-reverse)); margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse))); }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-center { text-align: center; }
+    .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+    .h-16 { height: 4rem; }
+    .w-16 { width: 4rem; }
+    .text-gray-300 { color: #d1d5db; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .text-gray-900 { color: #111827; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    @media (min-width: 768px) {
+      .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (min-width: 1024px) {
+      .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .overflow-hidden { overflow: hidden; }
+    .hover\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    .transition-shadow { transition-property: box-shadow; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+    .duration-300 { transition-duration: 300ms; }
+    .w-full { width: 100%; }
+    .h-48 { height: 12rem; }
+    .object-cover { object-fit: cover; }
+    .p-6 { padding: 1.5rem; }
+    .justify-between { justify-content: space-between; }
+    .items-start { align-items: flex-start; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .text-gray-900 { color: #111827; }
+    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .rounded-full { border-radius: 9999px; }
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .font-medium { font-weight: 500; }
+    .bg-green-100 { background-color: #dcfce7; }
+    .text-green-800 { color: #166534; }
+    .bg-yellow-100 { background-color: #fef9c3; }
+    .text-yellow-800 { color: #854d0e; }
+    .bg-red-100 { background-color: #fee2e2; }
+    .text-red-800 { color: #991b1b; }
+    .space-x-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(1rem * var(--tw-space-x-reverse)); margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))); }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-gray-600 { color: #4b5563; }
+    .items-center { align-items: center; }
+    .mr-1 { margin-right: 0.25rem; }
+    .h-4 { height: 1rem; }
+    .w-4 { width: 1rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-900 { color: #111827; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-gray-600 { color: #4b5563; }
+    .mb-4 { margin-bottom: 1rem; }
+    .font-medium { font-weight: 500; }
+    .text-gray-900 { color: #111827; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .space-y-1 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.25rem * var(--tw-space-y-reverse)); }
+    .flex { display: flex; }
+    .font-medium { font-weight: 500; }
+    .mr-2 { margin-right: 0.5rem; }
+    .border-t { border-top-width: 1px; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .mt-12 { margin-top: 3rem; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    .text-center { text-align: center; }
+    .text-gray-600 { color: #4b5563; }
+    svg {
+      width: 1em;
+      height: 1em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+    const { ChefHat, Utensils, Leaf, Clock, Zap, Search, Filter } = lucideReact;
+
+    const App = () => {
+      const [ingredients, setIngredients] = useState('');
+      const [selectedCuisine, setSelectedCuisine] = useState('');
+      const [selectedDifficulty, setSelectedDifficulty] = useState('');
+
+      // Mock recipe data
+      const recipes = [
+        {
+          id: 1,
+          name: '番茄炒蛋',
+          cuisine: '热菜',
+          difficulty: '简单',
+          ingredients: ['番茄', '鸡蛋', '盐', '油'],
+          steps: ['番茄切块，鸡蛋打散', '热锅加油，先炒鸡蛋至半熟盛出', '再加油炒番茄，加入盐', '番茄软烂后加入鸡蛋翻炒均匀'],
+          prepTime: 10,
+          cookTime: 5,
+          image: 'https://placehold.co/400x300/ff6b6b/ffffff?text=番茄炒蛋'
+        },
+        {
+          id: 2,
+          name: '凉拌黄瓜',
+          cuisine: '凉菜',
+          difficulty: '简单',
+          ingredients: ['黄瓜', '蒜', '醋', '酱油', '糖', '香油'],
+          steps: ['黄瓜拍碎切段', '蒜切末', '将所有调料混合', '拌匀即可'],
+          prepTime: 10,
+          cookTime: 0,
+          image: 'https://placehold.co/400x300/4ecdc4/ffffff?text=凉拌黄瓜'
+        },
+        {
+          id: 3,
+          name: '宫保鸡丁',
+          cuisine: '热菜',
+          difficulty: '中等',
+          ingredients: ['鸡胸肉', '花生', '干辣椒', '花椒', '葱', '姜', '蒜', '酱油', '醋', '糖', '淀粉'],
+          steps: ['鸡胸肉切丁，用淀粉腌制', '调制宫保汁（酱油、醋、糖、淀粉、水）', '热锅炒香花椒干辣椒', '加入鸡丁翻炒至变色', '加入宫保汁和花生，翻炒均匀'],
+          prepTime: 15,
+          cookTime: 10,
+          image: 'https://placehold.co/400x300/45b7d1/ffffff?text=宫保鸡丁'
+        },
+        {
+          id: 4,
+          name: '芒果布丁',
+          cuisine: '甜品',
+          difficulty: '简单',
+          ingredients: ['芒果', '牛奶', '吉利丁片', '糖'],
+          steps: ['芒果切块打成泥', '吉利丁片用冷水泡软', '牛奶加热，加入糖和吉利丁片搅拌至溶解', '加入芒果泥搅拌均匀', '倒入模具冷藏4小时'],
+          prepTime: 15,
+          cookTime: 5,
+          image: 'https://placehold.co/400x300/f9ca24/ffffff?text=芒果布丁'
+        },
+        {
+          id: 5,
+          name: '麻婆豆腐',
+          cuisine: '热菜',
+          difficulty: '中等',
+          ingredients: ['豆腐', '牛肉末', '豆瓣酱', '花椒', '蒜', '姜', '葱', '酱油', '淀粉'],
+          steps: ['豆腐切块焯水', '热锅炒香花椒，加入牛肉末炒散', '加入豆瓣酱、蒜姜末炒香', '加入豆腐轻轻翻炒', '加入水淀粉勾芡，撒葱花'],
+          prepTime: 15,
+          cookTime: 10,
+          image: 'https://placehold.co/400x300/eb4d4b/ffffff?text=麻婆豆腐'
+        },
+        {
+          id: 6,
+          name: '糖醋排骨',
+          cuisine: '热菜',
+          difficulty: '困难',
+          ingredients: ['排骨', '糖', '醋', '酱油', '料酒', '姜', '葱'],
+          steps: ['排骨焯水去腥', '热锅炒糖色至琥珀色', '加入排骨翻炒上色', '加入调料和水，小火炖煮40分钟', '大火收汁'],
+          prepTime: 20,
+          cookTime: 50,
+          image: 'https://placehold.co/400x300/e17055/ffffff?text=糖醋排骨'
+        },
+        {
+          id: 7,
+          name: '水果沙拉',
+          cuisine: '凉菜',
+          difficulty: '简单',
+          ingredients: ['苹果', '香蕉', '橙子', '酸奶', '蜂蜜'],
+          steps: ['所有水果切块', '混合在一起', '加入酸奶和蜂蜜', '拌匀即可'],
+          prepTime: 10,
+          cookTime: 0,
+          image: 'https://placehold.co/400x300/6c5ce7/ffffff?text=水果沙拉'
+        },
+        {
+          id: 8,
+          name: '提拉米苏',
+          cuisine: '甜品',
+          difficulty: '困难',
+          ingredients: ['手指饼干', '咖啡', '马斯卡彭奶酪', '鸡蛋', '糖', '可可粉'],
+          steps: ['分离蛋黄蛋白，蛋黄加糖打发', '加入马斯卡彭奶酪搅拌', '蛋白打发后拌入', '手指饼干蘸咖啡铺底', '铺一层奶酪糊，重复，最后撒可可粉冷藏6小时'],
+          prepTime: 30,
+          cookTime: 0,
+          image: 'https://placehold.co/400x300/a55eea/ffffff?text=提拉米苏'
+        }
+      ];
+
+      const cuisines = ['热菜', '凉菜', '甜品'];
+      const difficulties = ['简单', '中等', '困难'];
+
+      // Filter recipes based on user input
+      const filteredRecipes = useMemo(() => {
+        const userIngredients = ingredients.toLowerCase().split(',').map(ing => ing.trim()).filter(ing => ing);
+        
+        return recipes.filter(recipe => {
+          // Check if cuisine matches (or no cuisine selected)
+          const cuisineMatch = !selectedCuisine || recipe.cuisine === selectedCuisine;
+          
+          // Check if difficulty matches (or no difficulty selected)
+          const difficultyMatch = !selectedDifficulty || recipe.difficulty === selectedDifficulty;
+          
+          // Check if recipe ingredients are subset of user ingredients
+          const recipeIngredients = recipe.ingredients.map(ing => ing.toLowerCase());
+          const hasAllIngredients = recipeIngredients.every(ing => 
+            userIngredients.some(userIng => userIng.includes(ing) || ing.includes(userIng))
+          );
+          
+          return cuisineMatch && difficultyMatch && (userIngredients.length === 0 || hasAllIngredients);
+        }).sort((a, b) => {
+          // Sort by difficulty: 简单 -> 中等 -> 困难
+          const difficultyOrder = { '简单': 1, '中等': 2, '困难': 3 };
+          return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+        });
+      }, [ingredients, selectedCuisine, selectedDifficulty]);
+
+      const handleSearch = (e) => {
+        e.preventDefault();
+        // Search is handled by useMemo
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-orange-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="flex items-center space-x-3">
+                <ChefHat className="h-8 w-8 text-orange-500" />
+                <h1 className="text-3xl font-bold text-gray-900">美味厨房</h1>
+              </div>
+              <p className="mt-2 text-gray-600">输入你的食材，发现美味新可能！</p>
+            </div>
+          </header>
+
+          {/* Search Section */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <form onSubmit={handleSearch} className="bg-white rounded-xl shadow-lg p-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Ingredients Input */}
+                <div className="md:col-span-2">
+                  <label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Leaf className="inline-block mr-2 h-4 w-4 text-green-500" />
+                    你有什么食材？（用逗号分隔）
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="ingredients"
+                      value={ingredients}
+                      onChange={(e) => setIngredients(e.target.value)}
+                      placeholder="例如：鸡蛋, 番茄, 黄瓜, 鸡胸肉..."
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                    <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Cuisine Filter */}
+                <div>
+                  <label htmlFor="cuisine" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Utensils className="inline-block mr-2 h-4 w-4 text-blue-500" />
+                    菜系类型
+                  </label>
+                  <select
+                    id="cuisine"
+                    value={selectedCuisine}
+                    onChange={(e) => setSelectedCuisine(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">全部菜系</option>
+                    {cuisines.map(cuisine => (
+                      <option key={cuisine} value={cuisine}>{cuisine}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Difficulty Filter */}
+                <div>
+                  <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-2">
+                    <Zap className="inline-block mr-2 h-4 w-4 text-yellow-500" />
+                    难度等级
+                  </label>
+                  <select
+                    id="difficulty"
+                    value={selectedDifficulty}
+                    onChange={(e) => setSelectedDifficulty(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="">全部难度</option>
+                    {difficulties.map(difficulty => (
+                      <option key={difficulty} value={difficulty}>{difficulty}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Search Button */}
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-6 rounded-lg font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Search className="h-5 w-5" />
+                    <span>搜索菜谱</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Results Section */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  推荐菜谱 ({filteredRecipes.length})
+                </h2>
+                {ingredients && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Filter className="h-4 w-4 mr-1" />
+                    基于: {ingredients}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recipe Cards */}
+            {filteredRecipes.length === 0 ? (
+              <div className="text-center py-12">
+                <ChefHat className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-2">暂无匹配菜谱</h3>
+                <p className="text-gray-600">尝试调整食材或筛选条件</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredRecipes.map(recipe => (
+                  <div key={recipe.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <img 
+                      src={recipe.image} 
+                      alt={recipe.name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-xl font-bold text-gray-900">{recipe.name}</h3>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          recipe.difficulty === '简单' ? 'bg-green-100 text-green-800' :
+                          recipe.difficulty === '中等' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {recipe.difficulty}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          {recipe.prepTime + recipe.cookTime}分钟
+                        </div>
+                        <div className="flex items-center">
+                          <Utensils className="h-4 w-4 mr-1" />
+                          {recipe.cuisine}
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <h4 className="font-medium text-gray-900 mb-2">所需食材:</h4>
+                        <p className="text-sm text-gray-600">{recipe.ingredients.join(', ')}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-2">制作步骤:</h4>
+                        <ol className="text-sm text-gray-600 space-y-1">
+                          {recipe.steps.map((step, index) => (
+                            <li key={index} className="flex">
+                              <span className="font-medium mr-2">{index + 1}.</span>
+                              {step}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Footer */}
+          <footer className="bg-white border-t border-gray-200 mt-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <p className="text-center text-gray-600">
+                © 2024 美味厨房 - 发现你的烹饪天赋
+              </p>
+            </div>
+          </footer>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
